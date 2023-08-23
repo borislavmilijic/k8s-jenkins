@@ -1,0 +1,29 @@
+persistence:
+  storageClass: os-external-nfs
+controller:
+  jenkinsAdminEmail: devops-vie@smartstream-stp.com
+  image: "auroraharbor.smartstream-stp.com/okd/custom-jenkins-plugins"
+  tag: "0.0.1"
+  # imagePullSecretName: registry-secret
+  # imagePullPolicy: Always
+  installPlugins: false
+  adminUser: "admin"
+  adminPassword: "install"
+
+  resources:
+    requests:
+      cpu: "2"
+      memory: "2048Mi"
+    limits:
+      cpu: "4"
+      memory: "4096Mi"
+
+  # Openshift route
+  route:
+    enabled: true
+    labels: {}
+    annotations: {}
+    # path: "/jenkins"
+
+  cloudName: "okd"
+

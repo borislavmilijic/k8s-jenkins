@@ -1,0 +1,33 @@
+controller:
+  JCasC:
+    defaultConfig: true
+    configUrls: []
+    # - https://acme.org/jenkins.yaml
+    # Remote URL:s for configuration files.
+    configScripts:
+      ldap-settings: |
+        securityRealm:
+          activeDirectory:
+            customDomain: true
+            domains:
+            - bindName: "ldapdev@smartstream-stp.com"
+              bindPassword: "{AQAAABAAAAAQFyG0/EF6s7ZaPb6jppPantG+tD6AxPsK+rw5hfySZsU=}"
+              name: "sst.stp"
+              servers: "dcvie01.sst.stp:3268, dcvie02.sst.stp:3268, dcbri01.sst.stp:3268,\
+                \ dcbri02.sst.stp:3268"
+              tlsConfiguration: TRUST_ALL_CERTIFICATES
+            groupLookupStrategy: AUTO
+            removeIrrelevantGroups: false
+            requireTLS: false
+            startTls: true
+      welcome-message: |
+        jenkins:
+          systemMessage: Welcome to our CI\CD server.  This Jenkins is configured and managed 'as code'.
+      # Allows adding to the top-level security JCasC section. For legacy,  default the chart includes apiToken configurations
+      security:
+        apiToken:
+          creationOfLegacyTokenEnabled: false
+          tokenGenerationOnCreationEnabled: false
+          usageStatisticsEnabled: true
+      # Ignored if securityRealm is defined in controller.JCasC.configScripts
+
