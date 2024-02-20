@@ -834,6 +834,10 @@ additionalAgents: {}
 
 persistence:
   enabled: true
+  enableMavenCache: true
+  mavenCacheSize: 10Gi
+  enableKanikoCache: true
+  kanikoCacheSize: 20Gi
   ## A manually managed Persistent Volume and Claim
   ## Requires persistence.enabled: true
   ## If defined, PVC must be created manually before volume will be bound

@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Secret
+metadata:
+# this is the jenkins id.
+  name: "dev-ssh-private-key-k8s"
+  labels:
+# so we know what type it is.
+    "jenkins.io/credentials-type": "basicSSHUserPrivateKey"
+  annotations:
+# description - can not be a label as spaces are not allowed
+    "jenkins.io/credentials-description" : "dev user private key from Kubernetes"
+type: Opaque
+stringData:
+  username: dev
+  privateKey: |
+    -----BEGIN OPENSSH PRIVATE KEY-----
+    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
+    -----END OPENSSH PRIVATE KEY-----
+    

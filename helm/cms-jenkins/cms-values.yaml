@@ -4,25 +4,25 @@ persistence:
   enableMavenCache: true
   mavenCacheSize: 10Gi
   enableKanikoCache: true
-  kanikoCacheSize: 50Gi
+  kanikoCacheSize: 20Gi
 
-backup:
-  enabled: true
-  schedule: "0 2 * * *" # Runs every day at 2 am
-  existingSecret:
-    pegasus-aws-backup-user-k8s:
-      awsaccesskey: accessKey
-      awssecretkey: secretKey
-  destination: "s3://pegasus-k8s-backups/okd-jenkins/"
-  env: # The region of your S3 bucket.
-    - name: AWS_REGION
-      value: us-east-1
-# enable jenkins service-account to read secrets from k8s (needed for kubernetes secret plugin)
+# backup:
+#   enabled: true
+#   schedule: "0 2 * * *" # Runs every day at 2 am
+#   existingSecret:
+#     pegasus-aws-backup-user-k8s:
+#       awsaccesskey: accessKey
+#       awssecretkey: secretKey
+#   destination: "s3://pegasus-k8s-backups/okd-jenkins/"
+#   env: # The region of your S3 bucket.
+#     - name: AWS_REGION
+#       value: us-east-1
+# # enable jenkins service-account to read secrets from k8s (needed for kubernetes secret plugin)
 rbac:
   readSecrets: true
 
 controller:
-  jenkinsUrl: "https://jenkins.smartstream-okd.com"
+  jenkinsUrl: "https://cms-jenkins.smartstream-okd.com"
   jenkinsAdminEmail: doall@smartstream-okd.com
   image: "pegasus-nexus-docker.smartstream-okd.com/custom-jenkins-plugins"
   tag: "0.0.3"
@@ -34,17 +34,17 @@ controller:
   podCount: 1
   resources:
     requests:
-      cpu: "4"
-      memory: "4Gi"
+      cpu: "2"
+      memory: "2048Mi"
     limits:
-      cpu: "6"
-      memory: "6Gi"
+      cpu: "4"
+      memory: "4096Mi"
   JCasC:
     defaultConfig: false
   # Openshift route
   route:
     enabled: true
-    path: jenkins.smartstream-okd.com
+    path: cms-jenkins.smartstream-okd.com
   # sidecar that tracks changes in configuration
   sidecars:
     configAutoReload: 

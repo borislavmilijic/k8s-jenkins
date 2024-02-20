@@ -1,0 +1,4 @@
+## ignore everything that starts with aurora-
+/aurora**
+/cosign**
+/maven-settings**

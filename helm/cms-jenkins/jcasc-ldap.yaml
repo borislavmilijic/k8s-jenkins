@@ -1,0 +1,28 @@
+controller:
+  JCasC:
+    configScripts:
+      ldap: |
+        jenkins:             
+          securityRealm:
+            ldap:
+              configurations:
+                - groupSearchBase: "dc=sst,dc=stp"
+                  groupSearchFilter: "(&(objectclass=group)(cn={0}))"
+                  inhibitInferRootDN: true
+                  managerDN: "ldapjenkokd@sst.stp"
+                  managerPasswordSecret: "{AQAAABAAAAAQsfTI0nIzIV/m9vuHzefpdpk87Of00nvdbh/zgehTHHg=}"
+                  server: "192.168.111.2:3268"
+                  userSearch: "sAMAccountName={0}"
+                  userSearchBase: "dc=sst,dc=stp"
+              disableMailAddressResolver: false
+              disableRolePrefixing: true
+              groupIdStrategy: "caseInsensitive"
+              userIdStrategy: "caseInsensitive"
+
+          authorizationStrategy:
+            globalMatrix:
+              entries:
+              - group:
+                  name: "authenticated"
+                  permissions:
+                  - "Overall/Administer"

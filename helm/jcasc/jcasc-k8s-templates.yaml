@@ -1,0 +1,382 @@
+controller:
+  JCasC:
+    configScripts:
+      clouds: |
+        jenkins:
+          clouds:
+            - kubernetes:
+                name: "okd"
+                namespace: "jenkins"
+                jenkinsUrl: "http://jenkins.jenkins.svc.cluster.local:8080"
+                jenkinsTunnel: "jenkins-agent.jenkins.svc.cluster.local:50000"
+                maxRequestsPerHostStr: "32"
+                name: "kubernetes"
+                namespace: "jenkins"
+                serverUrl: "https://kubernetes.default"
+                podLabels:
+                - key: "jenkins/default-agent"
+                  value: "true"
+                - key: "jenkins/docker-builder-agent"
+                  value: "true"
+                - key: "jenkins/python-agent"
+                  value: "true"
+                templates:
+
+                  - name: "default"
+                    namespace: "jenkins"
+                    containers:
+                    - name: "jnlp"
+                      alwaysPullImage: false
+                      args: "^${computer.jnlpmac} ^${computer.name}"
+                      command: 
+                      envVars:
+                        - envVar:
+                            key: "JENKINS_URL"
+                            value: "http://jenkins.jenkins.svc.cluster.local:8080/"
+                        - envVar:
+                            key: "DOCKER_REGISTRY"
+                            value: "https://pegasus-nexus-docker.smartstream-okd.com"
+                      image: "jenkins/inbound-agent:3107.v665000b_51092-15"
+                      privileged: "false"
+                      resourceLimitCpu: 512m
+                      resourceLimitMemory: 512Mi
+                      resourceRequestCpu: 512m
+                      resourceRequestMemory: 512Mi
+                      runAsUser: 
+                      runAsGroup: 
+                      ttyEnabled: false
+                      workingDir: /home/jenkins/agent
+                    idleMinutes: 0
+                    instanceCap: 2147483647
+                    label: "default-agent"
+                    nodeUsageMode: "NORMAL"
+                    podRetention: Never
+                    showRawYaml: false
+                    serviceAccount: "jenkins"
+                    slaveConnectTimeoutStr: "100"
+                    yamlMergeStrategy: override
+
+                  - name: python
+                    label: "python-agent"
+                    serviceAccount: "jenkins"
+                    showRawYaml: false
+                    containers:
+                    - name: python
+                      image: docker-public-proxy.smartstream-okd.com/python:3
+                      command: "/bin/sh -c"
+                      args: "cat"
+                      ttyEnabled: true
+                      privileged: false
+                      resourceRequestCpu: "400m"
+                      resourceRequestMemory: "512Mi"
+                      resourceLimitCpu: "1"
+                      resourceLimitMemory: "1024Mi"
+                      runAsUser: 1000
+                      runAsGroup: 1000                  
+                      
+                  - name: pegasusApiLint
+                    label: "pegasus-api-lint"
+                    serviceAccount: "jenkins"
+                    showRawYaml: false
+                    activeDeadlineSeconds: 300
+                    containers:
+                    - name: pegasus-api-lint
+                      image: pegasus-nexus-docker.smartstream-okd.com/pegasus/pegasus-api-lint
+                      command: "/bin/sh -c"
+                      args: "cat"
+                      ttyEnabled: true
+                      privileged: false
+                      runAsUser: "1000"
+                      runAsGroup: "1000"
+                  
+                  - name: maven
+                    label: "maven-agent"
+                    showRawYaml: false
+                    volumes:
+                    - persistentVolumeClaim:
+                        mountPath: '/home/jenkins/agent/.m2/repository'
+                        claimName: maven-repo-pvc
+                        readOnly: false
+                    containers:
+                    - name: maven
+                      image: docker-public-proxy.smartstream-okd.com/maven:3.9.6-eclipse-temurin-21-alpine
+                      command: "sleep"
+                      args: "99d"
+                      envVars:
+                        - envVar:
+                            key: "HOME"
+                            value: "/home/jenkins/agent/"
+                        - envVar:
+                            key: "MAVEN_CONFIG"
+                            value: "/home/jenkins/agent/.m2/"
+                        - secretEnvVar:
+                            key: "NEXUS_USERNAME"
+                            secretName: "nexus-reg-jenkins-user-k8s"
+                            secretKey: "username"  
+                        - secretEnvVar:
+                            key: "NEXUS_PASSWORD"
+                            secretName: "nexus-reg-jenkins-user-k8s"
+                            secretKey: "password"                        
+                        - secretEnvVar:
+                            key: "PEGASUS_TECHNICAL_USER_USERNAME"
+                            secretName: "pegasus-technical-user-k8s"
+                            secretKey: "username"  
+                        - secretEnvVar:
+                            key: "PEGASUS_TECHNICAL_USER_PASSWORD"
+                            secretName: "pegasus-technical-user-k8s"
+                            secretKey: "password"
+                      ttyEnabled: true
+                      privileged: false
+                      resourceRequestCpu: "400m"
+                      resourceRequestMemory: "512Mi"
+                      resourceLimitCpu: "1"
+                      resourceLimitMemory: "1024Mi"
+                      runAsUser: 1000
+                      runAsGroup: 1000
+                    yamlMergeStrategy: "merge"
+                    yaml: |
+                      kind: Pod
+                      metadata:
+                        name: maven
+                      spec:
+                        containers:
+                        - name: maven
+                          volumeMounts:
+                            - name: mvn-settings
+                              mountPath: "/home/jenkins/agent/.m2/"
+                        volumes:
+                        - name: mvn-settings
+                          secret:
+                              secretName: mvn-settings-secret-k8s
+                              items:
+                                - key: maven-settings.xml
+                                  path: settings.xml
+
+                  - name: newman
+                    label: "newman-agent"
+                    showRawYaml: false
+                    containers:
+                    - name: newman
+                      image: docker-public-proxy.smartstream-okd.com/pstauffer/newman-htmlextra
+                      command: "sleep"
+                      args: "99d"
+                      ttyEnabled: true
+                      privileged: false
+                      resourceRequestCpu: "200m"
+                      resourceRequestMemory: "256Mi"
+                      resourceLimitCpu: "400m"
+                      resourceLimitMemory: "256Mi"
+                      runAsUser: 1000
+                      runAsGroup: 1000
+
+                  - name: kubectl
+                    label: "kubectl"
+                    showRawYaml: false
+                    serviceAccount: "jenkins"    
+                    containers:
+                    - name: kubectl
+                      image: docker-public-proxy.smartstream-okd.com/dtzar/helm-kubectl:latest
+                      command: "sleep"
+                      args: "99d"
+                      ttyEnabled: true
+                      privileged: false
+                      runAsUser: 1000
+                      runAsGroup: 1000
+                      resourceRequestCpu: "200m"
+                      resourceRequestMemory: "256Mi"
+                      resourceLimitCpu: "400m"
+                      resourceLimitMemory: "256Mi"
+
+                  - name: awsCli
+                    label: "aws-cli"
+                    showRawYaml: false
+                    serviceAccount: "jenkins"
+                    containers:
+                    - name: aws-cli
+                      image: docker-public-proxy.smartstream-okd.com/amazon/aws-cli
+                      command: "sleep"
+                      args: "300000"
+                      ttyEnabled: true
+                      privileged: false
+                      resourceRequestCpu: "200m"
+                      resourceRequestMemory: "256Mi"
+                      resourceLimitCpu: "400m"
+                      resourceLimitMemory: "256Mi"
+                      runAsUser: 1000
+                      runAsGroup: 1000                  
+                  
+                  - name: redis
+                    label: "redis"
+                    showRawYaml: false
+                    serviceAccount: "jenkins"
+                    containers:
+                    - name: redis
+                      image: docker-public-proxy.smartstream-okd.com/redis:7.2
+                      command: "sleep"
+                      args: "300000"
+                      ttyEnabled: true
+                      privileged: false
+                      resourceRequestCpu: "200m"
+                      resourceRequestMemory: "256Mi"
+                      resourceLimitCpu: "400m"
+                      resourceLimitMemory: "256Mi"
+                      runAsUser: 1000
+                      runAsGroup: 1000
+                  
+                  - name: mongo
+                    label: "mongo"
+                    showRawYaml: false
+                    serviceAccount: "jenkins"
+                    containers:
+                    - name: mongo
+                      image: pegasus-nexus-docker.smartstream-okd.com/mongo:4.4
+                      command: "sleep"
+                      args: "300000"
+                      ttyEnabled: true
+                      privileged: false
+                      resourceRequestCpu: "200m"
+                      resourceRequestMemory: "256Mi"
+                      resourceLimitCpu: "400m"
+                      resourceLimitMemory: "256Mi"
+                      runAsUser: 1000
+                      runAsGroup: 1000                  
+                  
+                  - name: awsCrane
+                    label: "aws-crane"
+                    showRawYaml: false
+                    serviceAccount: "jenkins"
+                    containers:
+                    - name: aws-crane
+                      image: pegasus-nexus-docker.smartstream-okd.com/devops/aws-crane:0.0.1
+                      command: "sleep"
+                      args: "300000"
+                      ttyEnabled: true
+                      privileged: false
+                      resourceRequestCpu: "200m"
+                      resourceRequestMemory: "256Mi"
+                      resourceLimitCpu: "400m"
+                      resourceLimitMemory: "256Mi"
+
+                  - name: nodejs
+                    label: "nodejs"
+                    showRawYaml: false
+                    serviceAccount: "jenkins"
+                    containers:
+                    - name: "nodejs"
+                      image: docker-public-proxy.smartstream-okd.com/node:18
+                      command: "sleep"
+                      args: "99d"
+                      ttyEnabled: true
+                      privileged: false
+                      runAsUser: 1000
+                      runAsGroup: 1000
+                      resourceRequestCpu: "2"
+                      resourceRequestMemory: "2Gi"
+                      resourceLimitCpu: "4"
+                      resourceLimitMemory: "4Gi"
+
+                  - name: cloudStorageService
+                    label: "cloud-storage-service-agent"
+                    showRawYaml: false
+                    containers:
+                    - name: cloud-storage-service
+                      image: pegasus-nexus-docker.smartstream-okd.com/pegasus-cloud-storage-service:0.1.0-SNAPSHOT
+                      envVars:
+                        - envVar:
+                            key: "AWS_URL"
+                            value: ""
+                        - envVar:
+                            key: "AWS_REGION"
+                            value: ""
+                      ttyEnabled: true
+                      privileged: false
+                      resourceRequestCpu: "200m"
+                      resourceRequestMemory: "256Mi"
+                      resourceLimitCpu: "400m"
+                      resourceLimitMemory: "256Mi"
+                      runAsUser: 1000
+                      runAsGroup: 1000 
+                  
+                  - name: cosign
+                    label: "signing-agent"
+                    showRawYaml: false
+                    containers:
+                    - name: cosign
+                      image: pegasus-nexus-docker.smartstream-okd.com/cosign
+                      command: "sleep"
+                      args: "99d"
+                      ttyEnabled: true
+                      privileged: false
+                      resourceRequestCpu: "200m"
+                      resourceRequestMemory: "256Mi"
+                      resourceLimitCpu: "200m"
+                      resourceLimitMemory: "256Mi"
+                      envVars:
+                      - secretEnvVar:
+                          key: "COSIGN_KEY"
+                          secretName: "cosign-k8s"
+                          secretKey: "COSIGN_KEY" 
+                      - secretEnvVar:
+                          key: "COSIGN_PUB"
+                          secretName: "cosign-k8s"
+                          secretKey: "COSIGN_PUB"                   
+                      - secretEnvVar:
+                          key: "OCI_REGISTRY"
+                          secretName: "cosign-k8s"
+                          secretKey: "OCI_REGISTRY"                   
+                      - secretEnvVar:
+                          key: "OCI_PASS"
+                          secretName: "cosign-k8s"
+                          secretKey: "OCI_PASS"
+                      - secretEnvVar:
+                          key: "OCI_LOGIN"
+                          secretName: "cosign-k8s"
+                          secretKey: "OCI_LOGIN"
+                      - secretEnvVar:
+                          key: "COSIGN_PASS"
+                          secretName: "cosign-k8s"
+                          secretKey: "COSIGN_PASS"   
+
+                  - name: kaniko
+                    showRawYaml: false
+                    label: "docker-builder-agent"
+                    serviceAccount: "jenkins"
+                    volumes:
+                    - persistentVolumeClaim:
+                        mountPath: '/cache'
+                        claimName: kaniko-cache-pvc
+                        readOnly: false
+                    containers:
+                    - name: kaniko
+                      image: gcr.io/kaniko-project/executor:debug
+                      command: "/busybox/cat"
+                      ttyEnabled: true
+                      runAsUser: 0
+                      runAsGroup: 0
+                      privileged: true
+                    
+                    ### alternative example how to mount volume from secret
+                    # volumes:
+                    # - secretVolume:
+                    #     mountPath: "/kaniko/.docker"
+                    #     optional: false
+                    #     secretName: "nexus-reg-k8s"
+                    
+                    yamlMergeStrategy: "merge"
+                    yaml: |
+                      kind: Pod
+                      metadata:
+                        name: kaniko
+                      spec:
+                        containers:
+                        - name: kaniko
+                          volumeMounts:
+                            - name: kaniko-secret
+                              mountPath: /kaniko/.docker
+                        volumes:
+                        - name: kaniko-secret
+                          secret:
+                            secretName: nexus-reg-k8s
+                            items:
+                              - key: .dockerconfigjson
+                                path: config.json

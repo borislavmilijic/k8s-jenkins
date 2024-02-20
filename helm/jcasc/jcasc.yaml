@@ -1,0 +1,275 @@
+controller:
+  JCasC:
+    configScripts:
+      welcome-msg: |
+       jenkins:
+         systemMessage: Welcome to Jenkins, you are. Managed as code, this instance is.
+      security: |
+        security:
+          scriptApproval:
+            approvedSignatures:
+            - "method hudson.model.Job getBuildByNumber int"
+            - "method hudson.model.Run getLogFile"
+            - "method java.util.Properties getProperty java.lang.String"
+            - "method jenkins.model.Jenkins getItemByFullName java.lang.String"
+            - "method org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper getRawBuild"
+            - "staticMethod com.cloudbees.plugins.credentials.CredentialsProvider lookupCredentials java.lang.Class"
+            - "staticMethod groovy.util.Eval me java.lang.String"
+            - "staticMethod jenkins.model.Jenkins getInstance"
+            - "staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods getText java.io.File"
+      bitbucket: |
+        unclassified:
+          bitbucketEndpointConfiguration:
+            endpoints:
+            - bitbucketCloudEndpoint:
+                enableCache: false
+                manageHooks: false
+                repositoriesCacheDuration: 0
+                teamCacheDuration: 0
+            - bitbucketServerEndpoint:
+                callChanges: false
+                credentialsId: "tlmaurorabuild-k8s"
+                displayName: "stash.vie.sst.stp"
+                manageHooks: true
+                serverUrl: "https://bitbucket.smartstream-stp.com"
+      email: |
+        unclassified:
+          timestamper:
+            allPipelines: true
+          ansiColorBuildWrapper:
+            globalColorMapName: "xterm"
+          email-ext:
+            adminRequiredForTemplateTesting: false
+            allowUnregisteredEnabled: true
+            charset: "UTF-8"
+            debugMode: false
+            defaultBody: |-
+              $PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:
+
+              Check console output at $BUILD_URL to view the results.
+            defaultContentType: "text/plain"
+            defaultRecipients: "devops-vie@smartstream-stp.com"
+            defaultSubject: "$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!"
+            defaultSuffix: "@smartstream-stp.com"
+            defaultTriggerIds:
+            - "hudson.plugins.emailext.plugins.trigger.FailureTrigger"
+            mailAccount:
+              smtpHost: "mailext.smartstream-stp.com"
+              smtpPort: "587"
+            maxAttachmentSize: -1
+            maxAttachmentSizeMb: -1
+            precedenceBulk: false
+            watchingEnabled: false
+      libraries: |
+        unclassified:
+          globalLibraries:
+            libraries:
+            - defaultVersion: "develop"
+              implicit: true
+              name: "jenkins-shared-libraries"
+              retriever:
+                modernSCM:
+                  libraryPath: "./"
+                  scm:
+                    git:
+                      credentialsId: "pegasus-technical-user-k8s"
+                      remote: "https://bitbucket.smartstream-stp.com/scm/ops/jenkins-shared-library.git"
+                      traits:
+                      - "gitBranchDiscovery"
+                      - headWildcardFilter:
+                          includes: "*"
+            - defaultVersion: "master"
+              implicit: false
+              name: "silab"
+              retriever:
+                modernSCM:
+                  libraryPath: "./"
+                  scm:
+                    git:
+                      credentialsId: "sil-bitbucket-technical-user-k8s"
+                      remote: "https://bitbucket.smartstream-stp.com/scm/sil/sil-jenkins.git"
+                      traits:
+                      - "gitBranchDiscovery"
+      nodes: |
+        jenkins:
+          nodes:
+            - permanent:
+                labelString: "arm external"
+                launcher:
+                  ssh:
+                    credentialsId: "dev-ssh-private-key-k8s"
+                    host: "192.168.103.61"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "knownHostsFileKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "AuroraLinGen1"
+                nodeDescription: "External node for building distroless arm and x86_64 base\
+                  \ images"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins-okd.node"
+                retentionStrategy: "always"
+            - permanent:
+                  labelString: "pegasus-slave linux pegasus-api"
+                  launcher:
+                    ssh:
+                      credentialsId: "pegasus-jenkins-okd-slave"
+                      host: "192.168.103.171"
+                      port: 22
+                      sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                  mode: EXCLUSIVE
+                  name: "auchindoun"
+                  nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                    \ as a temporary solution before rebuilding the Pipelines"
+                  numExecutors: 2
+                  remoteFS: "/var/lib/jenkins"
+                  retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-slave linux pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.103.174"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "azjol-nerub"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-slave linux pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.103.8"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "black-temple"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-slave linux pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.103.28"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "gruuls-lair"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-slave linux pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.103.30"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "gundrak"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-slave linux pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.103.139"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "karazhan"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.62.105"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "pegasus-slave"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 4
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-slave linux pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.103.168"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "sunwell-plateau"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-slave linux pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.103.166"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "tempest-keep"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-slave linux pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.103.163"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "zul-aman"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"
+            - permanent:
+                labelString: "pegasus-slave linux pegasus-api"
+                launcher:
+                  ssh:
+                    credentialsId: "pegasus-jenkins-okd-slave"
+                    host: "192.168.103.138"
+                    port: 22
+                    sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+                mode: EXCLUSIVE
+                name: "zul-farak"
+                nodeDescription: "This is a node used for building forked (air) pegasus projects\
+                  \ as a temporary solution before rebuilding the Pipelines"
+                numExecutors: 2
+                remoteFS: "/var/lib/jenkins"
+                retentionStrategy: "always"

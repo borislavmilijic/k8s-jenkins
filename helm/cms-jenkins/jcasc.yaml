@@ -1,0 +1,63 @@
+controller:
+  JCasC:
+    configScripts:
+      welcome-msg: |
+       jenkins:
+         systemMessage: Welcome to CMS Jenkins, you are. Managed as code, this instance is.
+      bitbucket: |
+        unclassified:
+          bitbucketEndpointConfiguration:
+            endpoints:
+            - bitbucketCloudEndpoint:
+                enableCache: false
+                manageHooks: false
+                repositoriesCacheDuration: 0
+                teamCacheDuration: 0
+            - bitbucketServerEndpoint:
+                callChanges: false
+                credentialsId: "tlmaurorabuild-k8s"
+                displayName: "stash.vie.sst.stp"
+                manageHooks: true
+                serverUrl: "https://bitbucket.smartstream-stp.com"
+      email: |
+        unclassified:
+          email-ext:
+            adminRequiredForTemplateTesting: false
+            allowUnregisteredEnabled: true
+            charset: "UTF-8"
+            debugMode: false
+            defaultBody: |-
+              $PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS:
+
+              Check console output at $BUILD_URL to view the results.
+            defaultContentType: "text/plain"
+            defaultRecipients: "devops-vie@smartstream-stp.com"
+            defaultSubject: "$PROJECT_NAME - Build # $BUILD_NUMBER - $BUILD_STATUS!"
+            defaultSuffix: "@smartstream-stp.com"
+            defaultTriggerIds:
+            - "hudson.plugins.emailext.plugins.trigger.FailureTrigger"
+            mailAccount:
+              smtpHost: "mailext.smartstream-stp.com"
+              smtpPort: "587"
+            maxAttachmentSize: -1
+            maxAttachmentSizeMb: -1
+            precedenceBulk: false
+            watchingEnabled: false
+      libraries: |
+        unclassified:
+          globalLibraries:
+            libraries:
+            - defaultVersion: "develop"
+              implicit: true
+              name: "jenkins-shared-libraries"
+              retriever:
+                modernSCM:
+                  libraryPath: "./"
+                  scm:
+                    git:
+                      credentialsId: "pegasus-technical-user-k8s"
+                      remote: "https://bitbucket.smartstream-stp.com/scm/ops/jenkins-shared-library.git"
+                      traits:
+                      - "gitBranchDiscovery"
+                      - headWildcardFilter:
+                          includes: "*"
